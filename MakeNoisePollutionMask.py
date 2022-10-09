@@ -46,30 +46,36 @@ for xGridIter in range(0,xGridIterMax)
 plt.imshow(starMask)
 input()
 #imwrite(starMask,'mask4.png')
-%% Perform a regression
+#Perform a regression
 
 
-xBeg = 1;
-xEnd = size(stars,1);
-yBeg = 1;
-yEnd = size(stars,2);
+xBeg = 0
+xEnd = stars.shape(0);
+yBeg = 0
+yEnd = stars.shape(1);
 currPatchChan1 = double(stars[xBeg:xEnd,yBeg:yEnd,0])
 currPatchChan2 = double(stars[xBeg:xEnd,yBeg:yEnd,1])
 currPatchChan3 = double(stars[xBeg:xEnd,yBeg:yEnd,2])
 currPatchMask = double(starMask[xBeg:xEnd,yBeg:yEnd])
-currPatchMask = min(currPatchMask,double(fgMask[:,:,1]))
+currPatchMask = np.min(currPatchMask,double(fgMask[:,:,0]))
 X = np.zeros(np.shape(currPatchChan1)[0]*np.shape(currPatchChan1)[2])
-iter = 1
-for i=xBeg:xEnd
-  for j=yBeg:yEnd
-    X(iter,1) = i
-    X(iter,2) = j
-    X(iter,3) = 1
+iter = 0
+for i in range(xBeg,xEnd):
+  for j in range(yBeg,yEnd):
+    X(iter,0) = i
+    X(iter,1) = j
+    X(iter,2) = 1
     iter = iter+1
 
 
 y = [currPatchChan1(:),currPatchChan2(:),currPatchChan3(:)]
 w = currPatchMask(:)
+numpy.linalg.lstsq
+
+Aw = np.dot(W,A)
+Bw = np.dot(B,W)
+X = np.linalg.lstsq(Aw, Bw)
+
 beta = lscov(X,y,w)
 
 currPatchLightPolMask_col = X*beta;
