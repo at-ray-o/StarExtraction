@@ -22,9 +22,9 @@ for xGridIter in range(0,xGridIterMax):
         yBeg = (yGridIter)*gridSize
         yEnd = (yGridIter)*gridSize+gridSize
 
-        currChan1 = (stars[xBeg:xEnd,yBeg:yEnd,0]).astype(np.float)
-        currChan2 = (stars[xBeg:xEnd,yBeg:yEnd,1]).astype(np.float)
-        currChan3 = (stars[xBeg:xEnd,yBeg:yEnd,2]).astype(np.float)
+        currChan1 = stars[xBeg:xEnd,yBeg:yEnd,0].astype(float)
+        currChan2 = stars[xBeg:xEnd,yBeg:yEnd,1].astype(float)
+        currChan3 = stars[xBeg:xEnd,yBeg:yEnd,2].astype(float)
 
         blockMeanCh1 = np.mean(currChan1[:])
         blockMeanCh2 = np.mean(currChan2[:])
@@ -39,25 +39,24 @@ for xGridIter in range(0,xGridIterMax):
         totalMaskCh2[(currChan2-blockMeanCh2)>3.0*blockStdevCh2] = 0
         totalMaskCh3 = np.ones(np.shape(currChan3))
         totalMaskCh3[(currChan3-blockMeanCh3)>3.0*blockStdevCh3] = 0
+        starMask[xBeg:xEnd,yBeg:yEnd] = np.minimum(np.minimum(totalMaskCh1,totalMaskCh2),totalMaskCh3)
 
-starMask[xBeg:xEnd,yBeg:yEnd] = np.min(np.min(totalMaskCh1,totalMaskCh2),totalMaskCh3);
-
-plt.imshow(starMask)
+plt.imsave('dum.png',starMask)
 input()
 #imwrite(starMask,'mask4.png')
 #Perform a regression
 
 
 xBeg = 0
-xEnd = stars.shape(0)
+xEnd = stars.shape[0]
 yBeg = 0
-yEnd = stars.shape(1)
-currPatchChan1 = float(stars[xBeg:xEnd,yBeg:yEnd,0])
-currPatchChan2 = float(stars[xBeg:xEnd,yBeg:yEnd,1])
-currPatchChan3 = float(stars[xBeg:xEnd,yBeg:yEnd,2])
-currPatchMask = float(starMask[xBeg:xEnd,yBeg:yEnd])
-currPatchMask = np.min(currPatchMask,float(fgMask[:,:,0]))
-X = np.zeros(np.shape(currPatchChan1)[0]*np.shape(currPatchChan1)[2])
+yEnd = stars.shape[1]
+currPatchChan1 = stars[xBeg:xEnd,yBeg:yEnd,0].astype(float)
+currPatchChan2 = stars[xBeg:xEnd,yBeg:yEnd,1].astype(float)
+currPatchChan3 = stars[xBeg:xEnd,yBeg:yEnd,2].astype(float)
+currPatchMask = starMask[xBeg:xEnd,yBeg:yEnd].astype(float)
+currPatchMask = np.minimum(currPatchMask,fgMask[:,:,0].astype(float))
+X = np.zeros((np.shape(currPatchChan1)[0]*np.shape(currPatchChan1)[1],3))
 iter = 0
 for i in range(xBeg,xEnd):
     for j in range(yBeg,yEnd):
@@ -69,7 +68,6 @@ for i in range(xBeg,xEnd):
 
 y = [currPatchChan1[:],currPatchChan2[:],currPatchChan3[:]]
 w = currPatchMask[:]
-numpy.linalg.lstsq
 
 Aw = np.dot(W,A)
 Bw = np.dot(B,W)
