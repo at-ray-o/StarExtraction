@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 
-stars = plt.imread('AverageImageCropped.png')
+stars = plt.imread('FromCamera102D3400/_DSC0365.jpg')
 fgMask = plt.imread('MaskForAverageImageCropped.png')
 
 # Iterate and find peaks
@@ -42,7 +43,6 @@ for xGridIter in range(0,xGridIterMax):
         starMask[xBeg:xEnd,yBeg:yEnd] = np.minimum(np.minimum(totalMaskCh1,totalMaskCh2),totalMaskCh3)
 
 plt.imsave('dum.png',starMask)
-input()
 #imwrite(starMask,'mask4.png')
 #Perform a regression
 
@@ -55,6 +55,8 @@ currPatchChan1 = stars[xBeg:xEnd,yBeg:yEnd,0].astype(float)
 currPatchChan2 = stars[xBeg:xEnd,yBeg:yEnd,1].astype(float)
 currPatchChan3 = stars[xBeg:xEnd,yBeg:yEnd,2].astype(float)
 currPatchMask = starMask[xBeg:xEnd,yBeg:yEnd].astype(float)
+
+
 currPatchMask = np.minimum(currPatchMask,fgMask[:,:,0].astype(float))
 X = np.zeros((np.shape(currPatchChan1)[0]*np.shape(currPatchChan1)[1],3))
 iter = 0
@@ -66,24 +68,34 @@ for i in range(xBeg,xEnd):
         iter = iter+1
 
 
-y = [currPatchChan1[:],currPatchChan2[:],currPatchChan3[:]]
-w = currPatchMask[:]
+Y = np.transpose(np.asarray([currPatchChan1.flatten('F'),currPatchChan2.flatten('F'),currPatchChan3.flatten('F')]))
+W = currPatchMask.flatten('F')
 
-Aw = np.dot(W,A)
-Bw = np.dot(B,W)
-X = np.linalg.lstsq(Aw, Bw)
+reg = LinearRegression().fit(X, Y, W)
 
-beta = lscov(X,y,w)
+# W = np.sqrt(np.diag(W))
+# Aw = np.dot(W,A)
+# Bw = np.dot(B,W)
+# X = np.linalg.lstsq(Aw, Bw)
 
-currPatchLightPolMask_col = X*beta;
-temp1 = np.reshape(currPatchLightPolMask_col[:,1],np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1])
-temp2 = np.reshape(currPatchLightPolMask_col[:,2],np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1])
-temp3 = np.reshape(currPatchLightPolMask_col[:,3],np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1])
-lightPolMask = zeros(size(stars))
-lightPolMask[:,:,1] = temp1
-lightPolMask[:,:,2] = temp2
-lightPolMask[:,:,3] = temp3
 
-imshow(uint8(lightPolMask))
-imwrite(stars-uint8(lightPolMask*starMask),'Stars_WO_LightPolBackground.png')
-imwrite(uint8(lightPolMask),'LightPolBackground.png')
+# WLS.fit(A, B, sample_weight=W)
+
+#beta = lscov(X,y,w)
+
+currPatchLightPolMask_col = reg.predict(X)
+temp1 = currPatchLightPolMask_col[:,0].reshape((np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1]),order='F')
+temp2 = currPatchLightPolMask_col[:,1].reshape((np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1]),order='F')
+temp3 = currPatchLightPolMask_col[:,2].reshape((np.shape(currPatchChan1)[0],np.shape(currPatchChan1)[1]),order='F')
+lightPolMask = np.zeros(np.shape(stars))
+
+#print(np.shape(temp1),np.shape(stars))
+lightPolMask[:,:,0] = np.multiply(temp1,starMask)
+lightPolMask[:,:,1] = np.multiply(temp2,starMask)
+lightPolMask[:,:,2] = np.multiply(temp3,starMask)
+
+plt.imsave('dum2.png',np.clip(stars-lightPolMask,0,1))
+
+# imshow(uint8(lightPolMask))
+# imwrite(stars-uint8(lightPolMask*starMask),'Stars_WO_LightPolBackground.png')
+# imwrite(uint8(lightPolMask),'LightPolBackground.png')
